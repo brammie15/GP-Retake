@@ -3,7 +3,8 @@
 [ext_resource type="Script" uid="uid://dp6lga5vmlogj" path="res://follower.gd" id="1_kmeat"]
 [ext_resource type="Texture2D" uid="uid://c32nc4oxx12lb" path="res://assets/enemy.png" id="2_kmeat"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_kdubu"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_kmeat"]
+radius = 6.08276
 
 [node name="Follower" type="CharacterBody2D"]
 motion_mode = 1
@@ -11,7 +12,7 @@ floor_block_on_wall = false
 script = ExtResource("1_kmeat")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("RectangleShape2D_kdubu")
+shape = SubResource("CircleShape2D_kmeat")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_kmeat")
