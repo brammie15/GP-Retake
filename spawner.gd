@@ -8,6 +8,8 @@ extends Node2D
 
 @export var total_spawns = 100
 
+var do_spawning = false
+
 var current_spawn_count = 0
 
 var spawn_timer := 0.0
@@ -17,11 +19,12 @@ func _ready():
 		assert(get_node(flow_field_controller) != null, "Flow controller not found!")
 
 func _process(delta: float) -> void:
-	spawn_timer += delta
-	if spawn_timer >= spawn_rate:
-		spawn_timer = 0.0
-		for i in range(spawn_count):
-			spawn_follower()
+	if do_spawning:
+		spawn_timer += delta
+		if spawn_timer >= spawn_rate:
+			spawn_timer = 0.0
+			for i in range(spawn_count):
+				spawn_follower()
 
 func spawn_follower():
 	if not follower_scene:

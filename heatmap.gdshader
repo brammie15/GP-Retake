@@ -13,11 +13,10 @@ vec3 heatmap(float t) {
 }
 
 void fragment() {
-    // Map quad's UVs to density texture coords
-    vec2 density_uv = UV * tex_size / tex_size; // same scale
+    vec2 density_uv = UV; // UV in [0,1]
     float density = texture(density_tex, density_uv).r;
 
     vec3 col = heatmap(clamp(density, 0.0, 1.0));
-    COLOR = vec4(col, density * 0.8); // fade alpha by density
-	//COLOR = vec4(1.0, 0.0, 1.0, 1.0);
+    COLOR = vec4(col, density * 0.8);
+    COLOR = vec4(col, 1);
 }

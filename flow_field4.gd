@@ -2,9 +2,6 @@ extends Node
 
 var flow_field: PackedVector2Array = PackedVector2Array()
 var costs: PackedInt32Array = PackedInt32Array()
-var crowd_costs: PackedInt32Array = PackedInt32Array()
-
-@export var crowdDesnity: Control
 
 @export var field_size: Vector2i = Vector2i(64, 64)  # fixed size
 @export var grid_origin: Vector2i = Vector2i.ZERO    # top-left in tile coords
@@ -13,14 +10,12 @@ var crowd_costs: PackedInt32Array = PackedInt32Array()
 @export var tile_map: TileMapLayer
 @export var walls_map: TileMapLayer
 
+var update_tilemap = true
+
 const TILE_SIZE: int = 16
 const MAX_COST = 99999
 
 @export var target: Node2D
-@export var agents: Array[Node2D] = []
-
-var crowd_image: Image
-var crowd_texture: ImageTexture
 
 var update_time = 0
 @export var update_time_interval = 2
@@ -41,53 +36,15 @@ const DIRECTIONS = [
 
 func _ready() -> void:
 	init_field()
-	crowd_image = Image.create(bounds.size.x, bounds.size.y, false, Image.FORMAT_RF) # one float channel
-	crowd_texture = ImageTexture.create_from_image(crowd_image)
 	generate_flow_field()
-	var overlay_node = Sprite2D.new()
-	overlay_node.texture = crowd_texture
-	overlay_node.modulate = Color(1, 1, 1, 0.4)
-	overlay_node.scale = Vector2(
-		bounds.size.x * TILE_SIZE / float(crowd_texture.get_width()),
-		bounds.size.y * TILE_SIZE / float(crowd_texture.get_height())
-	)
 
-	var real_size = Vector2(
-		crowd_texture.get_width() * overlay_node.scale.x,
-		crowd_texture.get_height() * overlay_node.scale.y
-	)
-	overlay_node.position = real_size * 0.5
-
-	add_child(overlay_node)
-
-func update_crowd_texture():
-	if crowd_image == null:
-		return
-	
-	var max_density = 1
-	for count in crowd_costs:
-		if count > max_density:
-			max_density = count
-	
-	for i in crowd_costs.size():
-		var density = float(crowd_costs[i]) / float(max_density)
-		var cell = index_to_cell(i) - bounds.position
-		if cell.x >= 0 and cell.y >= 0 and cell.x < bounds.size.x and cell.y < bounds.size.y:
-			crowd_image.set_pixel(cell.x, cell.y, Color(density, 0, 0))
-	
-	crowd_texture.update(crowd_image)
-
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	print("fps: " + str(Engine.get_frames_per_second()))
-	#if crowd_texture and $"../CanvasLayer/TextureRect2".material:
-		#var mat = $"../CanvasLayer/TextureRect2".material
-		#mat.set_shader_parameter("density_tex", crowd_texture)
-		#mat.set_shader_parameter("tex_size", bounds.size)
 
 func _physics_process(delta: float) -> void:
-	generate_flow_field()
 	update_time += delta
 	if update_time > update_time_interval:
+		generate_flow_field()
 		update_time = 0
 
 func get_field_index(cell: Vector2i) -> int:
@@ -120,49 +77,22 @@ func field_direction(pos: Vector2) -> Vector2:
 	var index: int = get_field_index(Vector2i(pos / TILE_SIZE))
 	if index < 0 or index >= flow_field.size():
 		return Vector2.ZERO
-	return flow_field[index].normalized()
+	return flow_field[index]
 
 func init_field() -> void:
-	for x in field_size.x:
-		for y in field_size.y:
-			costs.append(MAX_COST)
-			flow_field.append(Vector2.ZERO)
-			crowd_costs.append(0)
-
-func update_crowd_costs() -> void:
-	# Reset
-	for i in crowd_costs.size():
-		crowd_costs[i] = 0
-	
-	# Count agents in each cell
-	for agent in get_tree().get_nodes_in_group("agents"):
-		if not agent is Node2D:
-			continue
-		var cell = Vector2i(agent.global_position / TILE_SIZE)
-		var idx = get_field_index(cell)
-		if idx >= 0 and idx < crowd_costs.size():
-			crowd_costs[idx] += 1
-	
-	# Optional: spread influence to neighbors
-	var temp_costs = crowd_costs.duplicate()
-	for i in crowd_costs.size():
-		if crowd_costs[i] > 0:
-			var cell = index_to_cell(i)
-			for n in get_neighbors(cell):
-				var ni = get_field_index(n)
-				if ni >= 0 and ni < crowd_costs.size():
-					#temp_costs[ni] += int(crowd_costs[i] * 2)
-					temp_costs[ni] += crowd_costs[i] / 2
-	crowd_costs = temp_costs
+	var total_cells = field_size.x * field_size.y
+	costs.resize(total_cells)
+	flow_field.resize(total_cells)
+	for i in total_cells:
+		costs[i] = MAX_COST
+		flow_field[i] = Vector2.ZERO
 
 func generate_flow_field(force: bool = false) -> void:
 	var next_target_tile = Vector2i((target.global_position / TILE_SIZE).floor())
 	
-	update_crowd_costs()
-	update_crowd_texture()
-	
 	if target_tile == next_target_tile and not force:
 		return
+	
 	target_tile = next_target_tile
 
 	# Reset fields
@@ -205,12 +135,6 @@ func generate_flow_field(force: bool = false) -> void:
 			# Base cost from parent
 			var base_cost = costs[index] + travel_cost
 
-			# Add crowd penalty
-			# base_cost += crowd_costs[neighbor_index] * 2
-			# base_cost += int(pow(crowd_costs[neighbor_index], 2))
-			var CROWD_AVOID_WEIGHT = 5  # tweak until avoidance looks good
-			base_cost += int(pow(crowd_costs[neighbor_index], 2) * CROWD_AVOID_WEIGHT)
-
 			# Diagonal penalty
 			var angle = Vector2(target_tile).angle_to_point(Vector2(neighbor_cell))
 			if abs(angle - snappedf(angle, PI / 2)) > PI / 12:
@@ -244,4 +168,5 @@ func generate_flow_field(force: bool = false) -> void:
 
 		flow_field[i] = Vector2(cheapest_neighbor - cell)
 		var tile_idx = Vector2i(DIRECTIONS.find(flow_field[i]), 0)
-		tile_map.set_cell(cell, 0, tile_idx)
+		if update_tilemap:
+			tile_map.set_cell(cell, 0, tile_idx)

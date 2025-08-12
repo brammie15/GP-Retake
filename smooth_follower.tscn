@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://btr582yosde8l"]
+
+[ext_resource type="Script" uid="uid://l5w66j7vyue8" path="res://smooth_follower.gd" id="1_4e1g6"]
+[ext_resource type="Texture2D" uid="uid://c32nc4oxx12lb" path="res://assets/enemy.png" id="2_6uw4y"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_kmeat"]
+radius = 6.08276
+
+[node name="Follower" type="RigidBody2D"]
+mass = 0.1
+gravity_scale = 0.0
+linear_damp = 1.5
+script = ExtResource("1_4e1g6")
+speed = 200.0
+arrive_threshold = 20.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_kmeat")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_6uw4y")
