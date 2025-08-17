@@ -4,8 +4,7 @@ var flow_field: PackedVector2Array = PackedVector2Array()
 var costs: PackedInt32Array = PackedInt32Array()
 
 @export var field_size: Vector2i = Vector2i(64, 64)  # fixed size
-@export var grid_origin: Vector2i = Vector2i.ZERO    # top-left in tile coords
-@onready var bounds := Rect2i(grid_origin, field_size)  # fixed position
+@onready var bounds := Rect2i(Vector2i.ZERO, field_size)  # fixed 
 
 @export var tile_map: TileMapLayer
 @export var walls_map: TileMapLayer
@@ -13,7 +12,7 @@ var costs: PackedInt32Array = PackedInt32Array()
 var update_tilemap = true
 
 const TILE_SIZE: int = 16
-const MAX_COST = 99999
+const MAX_COST = 999999
 
 @export var target: Node2D
 
@@ -57,10 +56,6 @@ func index_to_cell(index: int) -> Vector2i:
 	var y = index / bounds.size.x
 	return Vector2i(x, y) + bounds.position
 
-func add_cost_to_cell(pos: Vector2i) -> void:
-	var index = get_field_index(Vector2i(pos / TILE_SIZE))
-	costs[index] += 1
-
 func get_neighbors(current_cell) -> Array[Vector2i]:
 	return [
 		current_cell + Vector2i.UP,
@@ -73,11 +68,25 @@ func get_neighbors(current_cell) -> Array[Vector2i]:
 		current_cell + Vector2i(-1, 1),
 	]
 
+# For followers
 func field_direction(pos: Vector2) -> Vector2:
 	var index: int = get_field_index(Vector2i(pos / TILE_SIZE))
 	if index < 0 or index >= flow_field.size():
 		return Vector2.ZERO
 	return flow_field[index]
+	
+func is_blocked(cell: Vector2i) -> bool:
+	var tile_data: TileData = walls_map.get_cell_tile_data(cell)
+	if tile_data and tile_data.get_collision_polygons_count(0) > 0:
+		return true
+	return false
+
+func get_travel_cost(cell: Vector2i) -> int:
+	# Return custom travel cost, or default to 1.
+	var tile_data: TileData = walls_map.get_cell_tile_data(cell)
+	if tile_data:
+		return int(tile_data.get_custom_data("travel_cost"))
+	return 1
 
 func init_field() -> void:
 	var total_cells = field_size.x * field_size.y
@@ -89,62 +98,55 @@ func init_field() -> void:
 
 func generate_flow_field(force: bool = false) -> void:
 	var next_target_tile = Vector2i((target.global_position / TILE_SIZE).floor())
-	
+
 	if target_tile == next_target_tile and not force:
 		return
-	
+
 	target_tile = next_target_tile
 
-	# Reset fields
-	for i in costs.size():
-		costs[i] = MAX_COST
-		flow_field[i] = Vector2.ZERO
+	costs.fill(MAX_COST)
+	flow_field.fill(Vector2.ZERO)
 
-	# Set target cost to 0
-	costs[get_field_index(target_tile)] = 0
+	var target_index = get_field_index(target_tile)
+	costs[target_index] = 0
 	cost_queue.clear()
 	cost_queue.append(target_tile)
 
-	var seen: Dictionary = {}
-	seen[target_tile] = true
-
-	# BFS cost field generation
+	# BFS
 	while not cost_queue.is_empty():
-		var current_cell = cost_queue.pop_front()
+		var current_cell: Vector2i = cost_queue.pop_front()
 		var index = get_field_index(current_cell)
 
 		for neighbor_cell in get_neighbors(current_cell):
-			var cell_rect = Rect2i(neighbor_cell.x, neighbor_cell.y, 1, 1)
-
-			if seen.has(neighbor_cell) or not bounds.encloses(cell_rect):
+			if neighbor_cell.x < bounds.position.x or neighbor_cell.x >= bounds.end.x:
+				continue
+			if neighbor_cell.y < bounds.position.y or neighbor_cell.y >= bounds.end.y:
 				continue
 
 			var neighbor_index = get_field_index(neighbor_cell)
-			var tile_data: TileData = walls_map.get_cell_tile_data(neighbor_cell)
 
-			var travel_cost: int = 1
+			# Already visited
+			if costs[neighbor_index] != MAX_COST:
+				continue
 
 			# Wall detection
-			if tile_data:
-				travel_cost = int(tile_data.get_custom_data("travel_cost"))
-				if tile_data.get_collision_polygons_count(0) > 0:
-					costs[neighbor_index] = MAX_COST
-					seen[neighbor_cell] = true
-					continue
+			if is_blocked(neighbor_cell):
+				costs[neighbor_index] = MAX_COST
+				continue
 
-			# Base cost from parent
-			var base_cost = costs[index] + travel_cost
+			# Base travel cost
+			var base_cost: int = costs[index] + get_travel_cost(neighbor_cell)
 
-			# Diagonal penalty
-			var angle = Vector2(target_tile).angle_to_point(Vector2(neighbor_cell))
-			if abs(angle - snappedf(angle, PI / 2)) > PI / 12:
-				base_cost += 1
+			# Diagonal Penalty
+			# Smoother than checking if x and y changed
+			var angle = Vector2(target_tile).angle_to_point(Vector2(neighbor_cell)) 
+			if abs(angle - snappedf(angle, PI / 2)) > PI / 12: base_cost += 1
 
+			# Assign and enqueue
 			costs[neighbor_index] = base_cost
 			cost_queue.append(neighbor_cell)
-			seen[neighbor_cell] = true
 
-	# Flow field direction assignment
+	# --- Flow field direction assignment ---
 	for i in flow_field.size():
 		if costs[i] == MAX_COST:
 			flow_field[i] = Vector2.ZERO
@@ -154,19 +156,24 @@ func generate_flow_field(force: bool = false) -> void:
 		if cell == target_tile:
 			continue
 
-		var cheapest = MAX_COST
-		var cheapest_neighbor = cell
+		var cheapest: int = MAX_COST
+		var cheapest_neighbor: Vector2i = cell
 
 		for neighbor_cell in get_neighbors(cell):
-			var neighbor_index = get_field_index(neighbor_cell)
-			var cell_rect = Rect2i(neighbor_cell.x, neighbor_cell.y, 1, 1)
-			if not bounds.encloses(cell_rect):
+			if neighbor_cell.x < bounds.position.x or neighbor_cell.x >= bounds.end.x:
 				continue
+			if neighbor_cell.y < bounds.position.y or neighbor_cell.y >= bounds.end.y:
+				continue
+
+			var neighbor_index = get_field_index(neighbor_cell)
 			if costs[neighbor_index] < cheapest:
 				cheapest = costs[neighbor_index]
 				cheapest_neighbor = neighbor_cell
+				if cheapest == 0: # can't do better than target
+					break
 
 		flow_field[i] = Vector2(cheapest_neighbor - cell)
-		var tile_idx = Vector2i(DIRECTIONS.find(flow_field[i]), 0)
+
 		if update_tilemap:
+			var tile_idx = Vector2i(DIRECTIONS.find(flow_field[i]), 0)
 			tile_map.set_cell(cell, 0, tile_idx)
