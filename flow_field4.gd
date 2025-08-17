@@ -3,21 +3,22 @@ extends Node
 var flow_field: PackedVector2Array = PackedVector2Array()
 var costs: PackedInt32Array = PackedInt32Array()
 
-@export var field_size: Vector2i = Vector2i(64, 64)  # fixed size
-@onready var bounds := Rect2i(Vector2i.ZERO, field_size)  # fixed 
-
-@export var tile_map: TileMapLayer
+@export var vis_map: TileMapLayer
 @export var walls_map: TileMapLayer
+@export var size: Vector2i = Vector2i(64, 64)  # fixed size
+@export var target: Node2D
+@export var update_time_interval = 2
+
+@onready var bounds := Rect2i(Vector2i.ZERO, size)  # fixed 
+
 
 var update_tilemap = true
 
 const TILE_SIZE: int = 16
 const MAX_COST = 999999
 
-@export var target: Node2D
 
 var update_time = 0
-@export var update_time_interval = 2
 
 var target_tile = Vector2i.ZERO
 var cost_queue: Array[Vector2i] = []
@@ -49,7 +50,7 @@ func _physics_process(delta: float) -> void:
 func get_field_index(cell: Vector2i) -> int:
 	var offset = cell - bounds.position
 	var index = offset.y * bounds.size.x + offset.x
-	return clampi(index, 0, flow_field.size() - 1)
+	return clamp(index, 0, flow_field.size() - 1)
 
 func index_to_cell(index: int) -> Vector2i:
 	var x = index % bounds.size.x
@@ -89,20 +90,20 @@ func get_travel_cost(cell: Vector2i) -> int:
 	return 1
 
 func init_field() -> void:
-	var total_cells = field_size.x * field_size.y
+	var total_cells: int = size.x * size.y
 	costs.resize(total_cells)
+	costs.fill(MAX_COST)
+
 	flow_field.resize(total_cells)
-	for i in total_cells:
-		costs[i] = MAX_COST
-		flow_field[i] = Vector2.ZERO
+	flow_field.fill(Vector2.ZERO)
 
 func generate_flow_field(force: bool = false) -> void:
-	var next_target_tile = Vector2i((target.global_position / TILE_SIZE).floor())
+	var next_target = Vector2i((target.global_position / TILE_SIZE).floor())
 
-	if target_tile == next_target_tile and not force:
+	if target_tile == next_target and not force:
 		return
 
-	target_tile = next_target_tile
+	target_tile = next_target
 
 	costs.fill(MAX_COST)
 	flow_field.fill(Vector2.ZERO)
@@ -146,7 +147,7 @@ func generate_flow_field(force: bool = false) -> void:
 			costs[neighbor_index] = base_cost
 			cost_queue.append(neighbor_cell)
 
-	# --- Flow field direction assignment ---
+	# Now for the directions based on costs
 	for i in flow_field.size():
 		if costs[i] == MAX_COST:
 			flow_field[i] = Vector2.ZERO
@@ -176,4 +177,4 @@ func generate_flow_field(force: bool = false) -> void:
 
 		if update_tilemap:
 			var tile_idx = Vector2i(DIRECTIONS.find(flow_field[i]), 0)
-			tile_map.set_cell(cell, 0, tile_idx)
+			vis_map.set_cell(cell, 0, tile_idx)

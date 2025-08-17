@@ -11,7 +11,7 @@ func _on_h_slider_value_changed(value: float) -> void:
 
 func _on_check_button_toggled(toggled_on: bool) -> void:
 	$"../FlowField".update_tilemap = toggled_on
-	$"../TileMapLayer".visible = toggled_on
+	$"../VisMap".visible = toggled_on
 
 
 func _on_check_button_2_toggled(toggled_on: bool) -> void:
