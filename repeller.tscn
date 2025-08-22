@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://ck7vb870ddfxf"]
+
+[ext_resource type="Script" uid="uid://wvj7le32ijcs" path="res://repeller.gd" id="1_h803l"]
+[ext_resource type="Texture2D" uid="uid://isx6d45vk0fb" path="res://assets/repeller.png" id="2_naw8d"]
+
+[node name="Repeller" type="Node2D"]
+script = ExtResource("1_h803l")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_naw8d")

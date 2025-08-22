@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=4 uid="uid://blifeufggpp6q"]
+[gd_scene load_steps=9 format=4 uid="uid://blifeufggpp6q"]
 
 [ext_resource type="TileSet" uid="uid://76geueuuy7ht" path="res://new_tile_set.tres" id="1_wtcfe"]
 [ext_resource type="Script" uid="uid://bda771n8l6bd1" path="res://flow_field4.gd" id="2_d21ai"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://bytdnce5m6xn7" path="res://spawner.gd" id="5_kdubu"]
 [ext_resource type="Script" uid="uid://8kreceja8vt1" path="res://player.gd" id="5_q6r6c"]
 [ext_resource type="PackedScene" uid="uid://btr582yosde8l" path="res://smooth_follower.tscn" id="6_d21ai"]
+[ext_resource type="PackedScene" uid="uid://ck7vb870ddfxf" path="res://repeller.tscn" id="8_4d7sh"]
 [ext_resource type="Script" uid="uid://cck74tileoheo" path="res://ui-controller.gd" id="8_rj586"]
 
 [node name="Node2D" type="Node2D"]
@@ -16,7 +17,6 @@ tile_set = ExtResource("1_wtcfe")
 
 [node name="VisMap" type="TileMapLayer" parent="."]
 visible = false
-tile_map_data = PackedByteArray("AAAAAAAAAAAAAAEAAAABAAAAAAAAAAEAAAACAAAAAAAAAAEAAAADAAAAAAAAAAEAAAAEAAAAAAAAAAEAAAAFAAAAAAAAAAEAAAAGAAAAAAAAAAEAAAAHAAAAAAAAAAEAAAAIAAAAAAAAAAEAAAAJAAAAAAAAAAEAAAAKAAAAAAAAAAEAAAALAAAAAAAAAAEAAAAMAAAAAAAAAAEAAAANAAAAAAAAAAEAAAAAAAEAAAAAAAEAAAAAAAIAAAAAAAEAAAAAAAMAAAAAAAEAAAAAAAQAAAAAAAEAAAAAAAUAAAAAAAEAAAAAAAYAAAAAAAEAAAAAAAcAAAAAAAEAAAAAAAgAAAAAAAEAAAAAAAkAAAAAAAEAAAA=")
 tile_set = ExtResource("1_wtcfe")
 
 [node name="FlowField" type="Node" parent="." node_paths=PackedStringArray("vis_map", "walls_map", "target")]
@@ -119,6 +119,9 @@ script = ExtResource("5_q6r6c")
 
 [node name="Camera2D" type="Camera2D" parent="Node2D2"]
 zoom = Vector2(2, 2)
+
+[node name="Repeller" parent="." instance=ExtResource("8_4d7sh")]
+position = Vector2(388, 245)
 
 [connection signal="value_changed" from="CanvasLayer2/MarginContainer/HSlider" to="CanvasLayer2" method="_on_h_slider_value_changed"]
 [connection signal="toggled" from="CanvasLayer2/MarginContainer/MarginContainer/VBoxContainer/CheckButton" to="CanvasLayer2" method="_on_check_button_toggled"]
