@@ -17,3 +17,16 @@ func _on_check_button_toggled(toggled_on: bool) -> void:
 func _on_check_button_2_toggled(toggled_on: bool) -> void:
 	for spawner in get_tree().get_nodes_in_group("spawner"):
 		spawner.do_spawning = toggled_on
+
+
+func _on_h_slider_2_value_changed(value: float) -> void:
+	# bfs strength
+	$"../FlowField".bfs_strength = value
+
+
+func _on_att_value_changed(value: float) -> void:
+	$"../FlowField".attractor_strength = value
+
+
+func _on_rep_value_changed(value: float) -> void:
+	$"../FlowField".repeller_strength = value

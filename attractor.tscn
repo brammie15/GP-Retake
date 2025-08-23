@@ -1,8 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://c87xhj3vuojsx"]
+[gd_scene load_steps=3 format=3 uid="uid://c87xhj3vuojsx"]
 
 [ext_resource type="Texture2D" uid="uid://hv6vc7npufdi" path="res://assets/attractor.png" id="1_55qne"]
+[ext_resource type="Script" uid="uid://bjormxcshajox" path="res://attractor.gd" id="1_i7tgk"]
 
 [node name="Attractor" type="Node2D"]
+script = ExtResource("1_i7tgk")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_55qne")

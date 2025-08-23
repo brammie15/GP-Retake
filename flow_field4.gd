@@ -11,6 +11,10 @@ var costs: PackedInt32Array = PackedInt32Array()
 
 @onready var bounds := Rect2i(Vector2i.ZERO, size)  # fixed 
 
+@export var bfs_strength = 1
+@export var attractor_strength = 1
+@export var repeller_strength = 1
+
 
 var update_tilemap = true
 
@@ -65,6 +69,11 @@ func get_repellers() -> Array:
 		repellers.append(repeller)
 	return repellers
 
+func get_attractors() -> Array:
+	var attractors: Array = []
+	for attractor in get_tree().get_nodes_in_group("attractors"):
+		attractors.append(attractor)
+	return attractors
 
 # For followers
 func field_direction(pos: Vector2) -> Vector2:
@@ -145,6 +154,8 @@ func generate_flow_field(force: bool = false) -> void:
 			cost_queue.append(neighbor_cell)
 			
 	var repellers = get_repellers()
+	var attractors = get_attractors()
+	
 			
 	for i in flow_field.size():
 		var cell: Vector2i = GridUtils.index_to_cell(i, bounds)
@@ -181,6 +192,7 @@ func generate_flow_field(force: bool = false) -> void:
 					
 		var dir = Vector2(cheapest_neighbor - cell)
 		
+		var repeller_force = Vector2.ZERO
 		for repeller in repellers:
 			var repeller_cell: Vector2i = GridUtils.world_to_cell(repeller.global_position, TILE_SIZE)
 			if not bounds.has_point(repeller_cell):
@@ -191,11 +203,23 @@ func generate_flow_field(force: bool = false) -> void:
 
 			# Strength decays with distance
 			var push = diff.normalized() * (repeller.strength / dist)
-			dir += push
+			repeller_force += push
+		
+		var attractor_force = Vector2.ZERO
+		for attractor in attractors:
+			var attractor_cell: Vector2i = GridUtils.world_to_cell(attractor.global_position, TILE_SIZE)
+			if not bounds.has_point(attractor_cell):
+				continue
 
-		flow_field[i] = dir.normalized()
+			var diff = Vector2(attractor_cell - cell)  # point toward attractor
+			var dist = max(diff.length(), 0.001)
 
-		#flow_field[i] = Vector2(cheapest_neighbor - cell)
+			if dist <= attractor.range:
+				var pull = diff.normalized() * (attractor.strength / dist)
+				attractor_force += pull
+
+		#flow_field[i] = dir.normalized()
+		flow_field[i] = ((dir * bfs_strength) + (attractor_force * attractor_strength) + (repeller_force * repeller_strength)).normalized()
 
 		if update_tilemap:
 			var snapped_dir = find_closest(flow_field[i])

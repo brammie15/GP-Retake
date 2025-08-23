@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=4 uid="uid://blifeufggpp6q"]
+[gd_scene load_steps=13 format=4 uid="uid://blifeufggpp6q"]
 
 [ext_resource type="TileSet" uid="uid://76geueuuy7ht" path="res://new_tile_set.tres" id="1_wtcfe"]
 [ext_resource type="Script" uid="uid://bda771n8l6bd1" path="res://flow_field4.gd" id="2_d21ai"]
@@ -8,6 +8,16 @@
 [ext_resource type="PackedScene" uid="uid://btr582yosde8l" path="res://smooth_follower.tscn" id="6_d21ai"]
 [ext_resource type="PackedScene" uid="uid://ck7vb870ddfxf" path="res://repeller.tscn" id="8_4d7sh"]
 [ext_resource type="Script" uid="uid://cck74tileoheo" path="res://ui-controller.gd" id="8_rj586"]
+[ext_resource type="PackedScene" uid="uid://c87xhj3vuojsx" path="res://attractor.tscn" id="9_4d7sh"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4d7sh"]
+bg_color = Color(0, 0, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ir8iy"]
+bg_color = Color(0, 1, 0.183333, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hqns4"]
+bg_color = Color(1, 0, 0, 1)
 
 [node name="Node2D" type="Node2D"]
 
@@ -39,7 +49,7 @@ position = Vector2(26, 22)
 script = ExtResource("5_kdubu")
 follower_scene = ExtResource("6_d21ai")
 flow_field_controller = NodePath("../FlowField")
-spawn_rate = 0.05
+spawn_rate = 0.1
 total_spawns = 200
 
 [node name="Spawner2" type="Node2D" parent="." groups=["spawner"]]
@@ -47,7 +57,7 @@ position = Vector2(17, 997)
 script = ExtResource("5_kdubu")
 follower_scene = ExtResource("6_d21ai")
 flow_field_controller = NodePath("../FlowField")
-spawn_rate = 0.05
+spawn_rate = 0.1
 total_spawns = 200
 
 [node name="Spawner3" type="Node2D" parent="." groups=["spawner"]]
@@ -55,15 +65,15 @@ position = Vector2(974, 988)
 script = ExtResource("5_kdubu")
 follower_scene = ExtResource("6_d21ai")
 flow_field_controller = NodePath("../FlowField")
-spawn_rate = 0.05
+spawn_rate = 0.1
 total_spawns = 200
 
 [node name="Spawner4" type="Node2D" parent="." groups=["spawner"]]
-position = Vector2(444, 449)
+position = Vector2(981, 21)
 script = ExtResource("5_kdubu")
 follower_scene = ExtResource("6_d21ai")
 flow_field_controller = NodePath("../FlowField")
-spawn_rate = 0.05
+spawn_rate = 0.1
 total_spawns = 200
 
 [node name="CanvasLayer2" type="CanvasLayer" parent="." node_paths=PackedStringArray("camera")]
@@ -112,6 +122,31 @@ size_flags_horizontal = 8
 theme_override_constants/h_separation = 10
 text = "spawn enemies"
 
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="bfs" type="VSlider" parent="CanvasLayer2/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_4d7sh")
+max_value = 2.0
+step = 0.1
+value = 1.0
+
+[node name="att" type="VSlider" parent="CanvasLayer2/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_ir8iy")
+max_value = 2.0
+step = 0.1
+value = 1.0
+
+[node name="rep" type="VSlider" parent="CanvasLayer2/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_hqns4")
+max_value = 2.0
+step = 0.1
+value = 1.0
+
 [node name="Node2D2" type="Sprite2D" parent="."]
 position = Vector2(264, 142)
 texture = ExtResource("4_0hol4")
@@ -121,8 +156,15 @@ script = ExtResource("5_q6r6c")
 zoom = Vector2(2, 2)
 
 [node name="Repeller" parent="." instance=ExtResource("8_4d7sh")]
-position = Vector2(388, 245)
+position = Vector2(158, 283)
+
+[node name="Attractor" parent="." instance=ExtResource("9_4d7sh")]
+position = Vector2(481, 408)
+strength = 2.0
 
 [connection signal="value_changed" from="CanvasLayer2/MarginContainer/HSlider" to="CanvasLayer2" method="_on_h_slider_value_changed"]
 [connection signal="toggled" from="CanvasLayer2/MarginContainer/MarginContainer/VBoxContainer/CheckButton" to="CanvasLayer2" method="_on_check_button_toggled"]
 [connection signal="toggled" from="CanvasLayer2/MarginContainer/MarginContainer/VBoxContainer/CheckButton2" to="CanvasLayer2" method="_on_check_button_2_toggled"]
+[connection signal="value_changed" from="CanvasLayer2/MarginContainer/HBoxContainer/bfs" to="CanvasLayer2" method="_on_h_slider_2_value_changed"]
+[connection signal="value_changed" from="CanvasLayer2/MarginContainer/HBoxContainer/att" to="CanvasLayer2" method="_on_att_value_changed"]
+[connection signal="value_changed" from="CanvasLayer2/MarginContainer/HBoxContainer/rep" to="CanvasLayer2" method="_on_rep_value_changed"]
