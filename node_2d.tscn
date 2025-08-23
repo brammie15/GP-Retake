@@ -147,20 +147,12 @@ max_value = 2.0
 step = 0.1
 value = 1.0
 
-[node name="Node2D2" type="Sprite2D" parent="."]
-position = Vector2(264, 142)
-texture = ExtResource("4_0hol4")
-script = ExtResource("5_q6r6c")
-
-[node name="Camera2D" type="Camera2D" parent="Node2D2"]
-zoom = Vector2(2, 2)
-
 [node name="Repeller" parent="." instance=ExtResource("8_4d7sh")]
 position = Vector2(158, 283)
 
 [node name="Attractor" parent="." instance=ExtResource("9_4d7sh")]
-position = Vector2(481, 408)
-strength = 2.0
+visible = false
+position = Vector2(567, 430)
 
 [connection signal="value_changed" from="CanvasLayer2/MarginContainer/HSlider" to="CanvasLayer2" method="_on_h_slider_value_changed"]
 [connection signal="toggled" from="CanvasLayer2/MarginContainer/MarginContainer/VBoxContainer/CheckButton" to="CanvasLayer2" method="_on_check_button_toggled"]
