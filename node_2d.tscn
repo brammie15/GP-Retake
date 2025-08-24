@@ -151,7 +151,6 @@ value = 1.0
 position = Vector2(158, 283)
 
 [node name="Attractor" parent="." instance=ExtResource("9_4d7sh")]
-visible = false
 position = Vector2(567, 430)
 
 [connection signal="value_changed" from="CanvasLayer2/MarginContainer/HSlider" to="CanvasLayer2" method="_on_h_slider_value_changed"]

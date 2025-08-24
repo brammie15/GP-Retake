@@ -6,6 +6,5 @@ extends Node2D
 func _ready() -> void:
 	add_to_group("repellers")
 
-
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, range, Color(1, 0, 0, 0.3))
